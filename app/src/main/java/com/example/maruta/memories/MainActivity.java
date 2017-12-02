@@ -1,6 +1,8 @@
 package com.example.maruta.memories;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.support.v7.app.AppCompatActivity;
@@ -21,10 +23,11 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-
     private double coord[];
-    static private List<String> list1 = new ArrayList<>();
-    static private ArrayAdapter listAdp;
+    private ArrayList<String> list1 = new ArrayList<>();
+    private ArrayAdapter listAdp;
+
+    private SharedPreferences sh;
 
     //Ui
     private Button btnToMap;
@@ -58,6 +61,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(list1.size() > 0){
+
+            try {
+                sh.edit().putString("Memo", ObjectSerializer.serialize(list1)).apply();
+
+            } catch (IOException e) {
+
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void addMemory(double[] coord) {
 
         Geocoder geoCode = new Geocoder(this);
@@ -77,15 +96,27 @@ public class MainActivity extends AppCompatActivity {
 
             e.printStackTrace();
         }
-
     }
 
+
+
     private void initUi() {
+
+        sh = this.getSharedPreferences("com.example.maruta.memories", Context.MODE_PRIVATE);
 
         btnToMap = findViewById(R.id.btnToMap);
         coord = new double[3];
 
+        try {
+
+            list1 = (ArrayList<String>) ObjectSerializer.deserialize(sh.getString("Memo", ObjectSerializer.serialize(new ArrayList<>())));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         listAdp = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list1);
+
         memoriesList = findViewById(R.id.memoriesList);
         memoriesList.setAdapter(listAdp);
 
@@ -100,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
 
     }
 }
